@@ -1,0 +1,22 @@
+from src.Values import *
+from src.SymbolTable import SymbolTable
+
+globalSymbolTable = SymbolTable()
+globalSymbolTable.set('nulo', Number.null)
+globalSymbolTable.set('verdadero', Number.true)
+globalSymbolTable.set('falso', Number.false)
+globalSymbolTable.set('pi', Number.mathPI)
+globalSymbolTable.set('imprimir', BuiltInFunction.print)
+globalSymbolTable.set('imprimirRetorno', BuiltInFunction.printRet)
+globalSymbolTable.set('entrada', BuiltInFunction.input)
+globalSymbolTable.set('entradaNum', BuiltInFunction.inputInt)
+globalSymbolTable.set('limpiar', BuiltInFunction.clear)
+globalSymbolTable.set('esNumero', BuiltInFunction.isNumber)
+globalSymbolTable.set('esTexto', BuiltInFunction.isString)
+globalSymbolTable.set('esLista', BuiltInFunction.isList)
+globalSymbolTable.set('esFuncion', BuiltInFunction.isFunction)
+globalSymbolTable.set('agregar', BuiltInFunction.append)
+globalSymbolTable.set('sacar', BuiltInFunction.pop)
+globalSymbolTable.set('extender', BuiltInFunction.extend)
+globalSymbolTable.set('longitud', BuiltInFunction.len)
+globalSymbolTable.set('correr', BuiltInFunction.run)
