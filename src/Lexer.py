@@ -23,53 +23,52 @@ class Lexer:
         self.advance()
       elif self.currentChar == '#':
         self.skipComment()
-      elif self.currentChar == ';\n':
+      elif self.currentChar in ';\n':
         tokens.append(Token(TT_NEWLINE, posStart=self.pos))
         self.advance()
-      elif self.currentChar in DIGITS: # TODO: Add support for floats
-        tokens.append(self.makeNumber())
+      elif self.currentChar in DIGITS + ".":
+        token, error = self.makeNumber()
+        if error: return [], error
+        tokens.append(token)
       elif self.currentChar in LETTERS:
         tokens.append(self.makeIdentifier())
       elif self.currentChar == '"':
         tokens.append(self.makeString())
       elif self.currentChar == '(':
-        tokens.append(Token(TT_LPAREN, posStart=self.pos))
+        tokens.append(Token(TT_LPAREN, posStart=self.pos, posEnd=self.pos))
         self.advance()
       elif self.currentChar == ')':
-        tokens.append(Token(TT_RPAREN, posStart=self.pos))
+        tokens.append(Token(TT_RPAREN, posStart=self.pos, posEnd=self.pos))
         self.advance()
       elif self.currentChar == '[':
-        tokens.append(Token(TT_LSQUARE, posStart=self.pos))
+        tokens.append(Token(TT_LSQUARE, posStart=self.pos, posEnd=self.pos))
         self.advance()
       elif self.currentChar == ']':
-        tokens.append(Token(TT_RSQUARE, posStart=self.pos))
+        tokens.append(Token(TT_RSQUARE, posStart=self.pos, posEnd=self.pos))
         self.advance()
       elif self.currentChar == '%':
-        tokens.append(Token(TT_MOD, posStart=self.pos))
+        tokens.append(Token(TT_MOD, posStart=self.pos, posEnd=self.pos))
         self.advance()
       elif self.currentChar == ',':
-        tokens.append(Token(TT_COMMA, posStart=self.pos))
+        tokens.append(Token(TT_COMMA, posStart=self.pos, posEnd=self.pos))
         self.advance()
       elif self.currentChar == '=':
         tokens.append(self.makeEquals())
       elif self.currentChar == '+':
-        tokens.append(Token(TT_PLUS, posStart=self.pos))
+        tokens.append(Token(TT_PLUS, posStart=self.pos, posEnd=self.pos))
         self.advance()
       elif self.currentChar == '-':
-        tokens.append(Token(TT_MINUS, posStart=self.pos))
+        tokens.append(Token(TT_MINUS, posStart=self.pos, posEnd=self.pos))
         self.advance()
         # tokens.append(Token(self.makeMinusOrArrow()))
       elif self.currentChar == '*':
-        tokens.append(Token(TT_MUL, posStart=self.pos))
+        tokens.append(Token(TT_MUL, posStart=self.pos, posEnd=self.pos))
         self.advance()
       elif self.currentChar == '/':
-        tokens.append(Token(TT_DIV, posStart=self.pos))
+        tokens.append(Token(TT_DIV, posStart=self.pos, posEnd=self.pos))
         self.advance()
       elif self.currentChar == '^':
-        tokens.append(Token(TT_POW, posStart=self.pos))
-        self.advance()
-      elif self.currentChar == '%':
-        tokens.append(Token(TT_MOD, posStart=self.pos))
+        tokens.append(Token(TT_POW, posStart=self.pos, posEnd=self.pos))
         self.advance()
       elif self.currentChar == '!':
         token, error = self.makeNotEquals()
@@ -80,18 +79,13 @@ class Lexer:
       elif self.currentChar == '>':
         tokens.append(self.makeGreaterThan())
       else:
-        posStart = self.pos.copy()
         char = self.currentChar
-        self.advance()
-        print(f'char: {char} end')
-        return [], IllegalCharError(posStart, self.pos,"'" + char + "'")
-        # char = self.currentChar
-        # if char != " ":
-        #   posStart = self.pos.copy()
-        #   self.advance()
-        #   return [], IllegalCharError(posStart, self.pos, char)
-        # else:
-        #   self.advance()
+        if char != " ":
+          posStart = self.pos.copy()
+          self.advance()
+          return [], IllegalCharError(posStart, self.pos, char)
+        else:
+          self.advance()
     
     tokens.append(Token(TT_EOF, posStart=self.pos))
     return tokens, None
@@ -105,14 +99,19 @@ class Lexer:
       if self.currentChar == '.':
         if dotCount == 1: break
         dotCount += 1
+        numStr += '.'
       else:
         numStr += self.currentChar
       self.advance()
 
-    if dotCount == 0:
-      return Token(TT_INT, int(numStr), posStart, self.pos)
+    if numStr[0] != '.':
+      if dotCount == 0:
+        return Token(TT_INT, int(numStr), posStart, self.pos), None
+      else:
+        return Token(TT_FLOAT, float(numStr), posStart, self.pos), None
     else:
-      return Token(TT_FLOAT, float(numStr), posStart, self.pos)
+      numStr = '0' + numStr
+      return Token(TT_FLOAT, float(numStr), posStart, self.pos), None
 
   def makeString(self):
     string = ''
@@ -135,18 +134,20 @@ class Lexer:
         else:
           string += self.currentChar
       self.advance()
-      escapeCharacter = False # TODO: Fix this
 
     self.advance()
     return Token(TT_STRING, string, posStart, self.pos)
 
-  def makeIdentifier(self):
+  def makeIdentifier(self, nextChar=None):
     idStr = ''
     posStart = self.pos.copy()
 
-    while self.currentChar != None and self.currentChar in LETTERS_DIGITS + '_':
-      idStr += self.currentChar
-      self.advance()
+    if nextChar == None:
+      while self.currentChar != None and self.currentChar in LETTERS:
+        idStr += self.currentChar
+        self.advance()
+    else:
+      idStr = nextChar
 
     tokType = TT_KEYWORD if idStr.lower() in KEYWORDS else TT_IDENTIFIER
     return Token(tokType, idStr, posStart, self.pos)
@@ -207,9 +208,6 @@ class Lexer:
     return Token(tokType, posStart=posStart, posEnd=self.pos)
 
   def skipComment(self):
-    self.advance()
-
-    while self.currentChar != '\n':
+    while self.currentChar != '\n' and self.currentChar != None:
       self.advance()
-    self.advance()
 

@@ -9,7 +9,7 @@ class Token:
       self.posEnd.advance()
       
     if posEnd:
-      self.posEnd = posEnd
+      self.posEnd = posEnd.copy()
 
   def matches(self, type_, value):
     return self.type == type_ and self.value == value
