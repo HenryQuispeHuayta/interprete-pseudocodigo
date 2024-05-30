@@ -1,7 +1,7 @@
 from src.Constants import *
-from src.Errors import *
+from src.Errors import RunTimeError, ReturnError
 from src.RunTimeResult import RunTimeResult
-from src.Values import *
+from src.Values import Number, String, List, Function, Empty
 
 class Interpreter:
   def visit(self, node, context):
@@ -33,23 +33,24 @@ class Interpreter:
     varName = node.varNameToken.value
     value = context.symbolTable.get(varName)
 
-    if value == None:
+    if not value:
       return res.failure(RunTimeError(
         node.posStart, node.posEnd,
         errorDetails['varNotDefined'].format(varName),
         context
       ))
 
-    value = value.copy().setPos(node.posStart, node.posEnd).setContext(context)
+    value = value.copy().setContext(context).setPos(node.posStart, node.posEnd)
     return res.success(value)
 
   def visitVarAssignNode(self, node, context):
     res = RunTimeResult()
-    varName = node.varNameToken.value
-    value = res.register(self.visit(node.valueNode))
-    if res.shouldReturn(): return res # TODO: shouldReturn()
+    varName = node.varNameToken
+    value = res.register(self.visit(node.valueNode, context))
+    if res.shouldReturn(): return res
 
-    context.symbolTable.set(varName, value)
+    context.symbolTable.set(varName.value, value)
+
     return res.success(value)
 
   def visitBinOpNode(self, node, context):
@@ -73,7 +74,7 @@ class Interpreter:
     elif node.opToken.type == TT_MOD:
       result, error = left.mod(right)
     elif node.opToken.type == TT_EE:
-      result, error = left.getComparisonEq(right)
+      result, error = left.getComparisonEe(right)
     elif node.opToken.type == TT_NE:
       result, error = left.getComparisonNe(right)
     elif node.opToken.type == TT_LT:
@@ -84,6 +85,8 @@ class Interpreter:
       result, error = left.getComparisonLte(right)
     elif node.opToken.type == TT_GTE:
       result, error = left.getComparisonGte(right)
+    elif node.opToken.type == TT_MM:
+      result, error = left.getComparisonMm(right)
     elif node.opToken.matches(TT_KEYWORD, 'y'):
       result, error = left.anded(right)
     elif node.opToken.matches(TT_KEYWORD, 'o'):
@@ -122,15 +125,15 @@ class Interpreter:
       if conditionValue.isTrue():
         exprValue = res.register(self.visit(expr, context))
         if res.shouldReturn(): return res
-        return res.success(Number.null if shouldReturnNull else exprValue)
+        return res.success(Empty() if shouldReturnNull else exprValue)
 
     if node.elseCase:
       expr, shouldReturnNull = node.elseCase
       exprValue = res.register(self.visit(expr, context))
       if res.shouldReturn(): return res
-      return res.success(Number.null if shouldReturnNull else exprValue)
+      return res.success(Empty() if shouldReturnNull else exprValue)
 
-    return res.success(Number.null)
+    return res.success(Empty())
 
   def visitForNode(self, node, context):
     res = RunTimeResult()
@@ -164,11 +167,12 @@ class Interpreter:
 
       if res.loopShouldContinue: continue
       if res.loopShouldBreak: break
-
-      elements.append(value)
+      
+      if type(value) != Empty:
+        elements.append(value)
 
     return res.success(
-      Number.null if node.shouldReturnNull else List(elements).setContext(context).setPos(node.posStart, node.posEnd)
+      Empty() if node.shouldReturnNull else List(elements).setContext(context).setPos(node.posStart, node.posEnd)
     )
 
   def visitWhileNode(self, node, context):
@@ -190,7 +194,7 @@ class Interpreter:
       elements.append(value)
 
     return res.success(
-      Number.null if node.shouldReturnNull else List(elements).setContext(context).setPos(node.posStart, node.posEnd)
+      Empty() if node.shouldReturnNull else List(elements).setContext(context).setPos(node.posStart, node.posEnd)
     )
 
   def visitFuncDefNode(self, node, context):
@@ -219,8 +223,25 @@ class Interpreter:
 
     returnValue = res.register(valueToCall.execute(args))
     if res.shouldReturn(): return res
-    returnValue = returnValue.copy().setPos(node.posStart, node.posEnd).setContext(context)
+    returnValue = returnValue.copy().setContext(context).setPos(node.posStart, node.posEnd)
 
+    return res.success(returnValue)
+
+  def visitCallListNode(self, node, context):
+    res = RunTimeResult()
+
+    valueToCall = res.register(self.visit(node.listToCall, context))
+    if res.shouldReturn(): return res
+    valueToCall = valueToCall.copy().setPos(node.posStart, node.posEnd)
+
+    index = res.register(self.visit(node.listIndexNode, context))
+    if res.shouldReturn(): return res
+    index = index.copy().setPos(node.posStart, node.posEnd)
+
+    returnValue = res.register(valueToCall.takeItem([index]))
+    if res.shouldReturn(): return res
+
+    returnValue = returnValue.copy().setContext(context).setPos(node.posStart, node.posEnd)
     return res.success(returnValue)
 
   def visitReturnNode(self, node, context):
@@ -239,20 +260,3 @@ class Interpreter:
 
   def visitBreakNode(self, node, context):
     return RunTimeResult().successBreak()
-
-  def visitIndexNode(self, node, context):
-    res = RunTimeResult()
-    list_ = res.register(self.visit(node.listNode, context))
-    if res.shouldReturn(): return res
-    index = res.register(self.visit(node.indexNode, context))
-    if res.shouldReturn(): return res
-
-    element = list_.getElementAtIndex(index)
-    if element == None:
-      return res.failure(RunTimeError(
-        node.posStart, node.posEnd,
-        errorDetails['listIndexOutOfBounds'].format(index.value),
-        context
-      ))
-
-    return res.success(element)
