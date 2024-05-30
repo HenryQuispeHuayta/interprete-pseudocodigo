@@ -10,8 +10,8 @@ class Error:
 
   def asString(self):
     result = f'{self.errorName}: {self.details}\n'
-    result += f'Archivo {self.posStart.fn}, línea {self.posStart.ln + 1}'
-    result += '\n\n' + stringWithArrows(self.posStart.ftxt, self.posStart, self.posEnd)
+    result += f'Archivo {self.posStart.fn}, línea {self.posStart.ln + 1}\n'
+    result += '\n' + stringWithArrows(self.posStart.ftxt, self.posStart, self.posEnd)
     return result
 
 class IllegalCharError(Error):
@@ -23,7 +23,7 @@ class InvalidSyntaxError(Error):
     super().__init__(posStart, posEnd, errorMesaages['InvalidSyntaxError'], details)
 
 class ExpectedCharError(Error):
-  def __init__(self, posStart, posEnd, details):
+  def __init__(self, posStart, posEnd, details=''):
     super().__init__(posStart, posEnd, errorMesaages['ExpectedCharError'], details)
 
 class InvalidIndentationError(Error):
@@ -41,18 +41,27 @@ class RunTimeError(Error):
 
   def asString(self):
     result = self.generateTraceback()
-    result += f'{self.errorName}: {self.details}'
-    result += '\n\n' + stringWithArrows(self.posStart.ftxt, self.posStart, self.posEnd)
+    result += f'{self.errorName}: {self.details}\n'
+    result += '\n' + stringWithArrows(self.posStart.ftxt, self.posStart, self.posEnd)
     return result
 
   def generateTraceback(self): # TODO: Analyze this method
     result = ''
     pos = self.posStart
     ctx = self.context
+    notLoop = True
 
     while ctx:
-      result = f'Archivo {pos.fn}, línea {str(pos.ln + 1)}, en {ctx.displayName}\n' + result
+      if notLoop:
+        result = 'Rastreo del error(última llamada):\n' + f'Archivo {pos.fn}, línea {pos.ln + 1}, en {ctx.displayName}\n' + result
+        notLoop = False
+      else:
+        result = f'Archivo {pos.fn}, línea {pos.ln + 1}, en {ctx.displayName}\n' + result
       pos = ctx.parentEntryPos
       ctx = ctx.parent
 
-    return 'Rastreo del error (última llamada):\n' + result
+    return result
+
+class ReturnError(Error):
+  def __init__(self, posStart, posEnd, details=''):
+    super().__init__(posStart, posEnd, errorMesaages['ReturnError'], details)
