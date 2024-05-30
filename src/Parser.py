@@ -278,7 +278,7 @@ class Parser:
       return res.success(VarAccessNode(tok))
 
     elif tok.type == TT_LPAREN:
-      self.registerAdvancement()
+      res.registerAdvancement()
       self.advance()
       expr = res.register(self.expr())
       if res.error: return res
@@ -302,7 +302,7 @@ class Parser:
       if res.error: return res
       return res.success(ifExpr)
 
-    elif tok.matches(TT_KEYWORD, 'fora'):
+    elif tok.matches(TT_KEYWORD, 'para'):
       forExpr = res.register(self.forExpr())
       if res.error: return res
       return res.success(forExpr)
@@ -487,7 +487,7 @@ class Parser:
   def forExpr(self):
     res = ParserResult()
 
-    if not self.currentTok.matches(TT_KEYWORD, 'fora'):
+    if not self.currentTok.matches(TT_KEYWORD, 'para'):
       return res.failure(InvalidSyntaxError(
         self.currentTok.posStart, self.currentTok.posEnd,
         errorDetails['forExpected']
@@ -685,7 +685,7 @@ class Parser:
     res.registerAdvancement()
     self.advance()
 
-    if self.currentTok.type != TT_ARROW:
+    if self.currentTok.type == TT_ARROW:
       res.registerAdvancement()
       self.advance()
       body = res.register(self.expr())
