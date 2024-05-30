@@ -44,7 +44,7 @@ KEYWORDS = [
   "entonces",
   "osi",
   "sino",
-  "fora",
+  "para",
   "hasta",
   "de",
   "mientras",
