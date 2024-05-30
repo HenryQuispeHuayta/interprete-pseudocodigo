@@ -6,7 +6,7 @@ LETTERS = string.ascii_letters + "ñÑ"
 LETTERS_DIGITS = LETTERS + DIGITS
 
 # Tokens Types
-TT_DOT = "DOT"
+# TT_DOT = "DOT"
 TT_INT = "INT"
 TT_FLOAT = "FLOAT"
 TT_STRING = "STRING"
@@ -31,7 +31,6 @@ TT_GT = "GT"
 TT_LTE = "LTE"
 TT_GTE = "GTE"
 TT_COMMA = "COMMA"
-TT_COLON = "COLON"
 TT_ARROW = "ARROW"
 TT_NEWLINE = "NEWLINE"
 TT_EOF = "EOF"
@@ -42,21 +41,18 @@ KEYWORDS = [
   "o",
   "no",
   "si",
+  "entonces",
   "osi",
   "sino",
   "fora",
+  "hasta",
+  "de",
   "mientras",
-  "entonces",
-  "a",
-  "paso",
   "funcion",
+  "fin",
   "retornar",
   "continuar",
   "romper",
-  "pasar",
-  "verdadero",
-  "falso",
-  "nulo",
 ]
 
 errorMesaages = {
@@ -66,6 +62,7 @@ errorMesaages = {
   "InvalidIndentationError": "Indentacion invalida",
   "InvalidTokenError": "Token invalido",
   "RunTimeError": "Error en tiempo de ejecucion",
+  "ReturnError": "Error de retorno",
 }
 
 errorDetails = {
@@ -88,7 +85,7 @@ errorDetails = {
   "tooFewArgsError": "Faltan argumentos",
   "invalidTypeError": "Tipo invalido",
   "invalidFileNameError": "La extension del archivo debe ser '.inf'",
-  "runTimeError": "Error en tiempo de ejecucion",
+  "runTimeError": "Error en tiempo de ejecucion {}",
   "exprExpected": "Se esperaba una expresion",
   "rsquareExpected": "Se esperaba ']'",
   "lsquareExpected": "Se esperaba '['",
@@ -102,4 +99,8 @@ errorDetails = {
   "newlineExpected": "Se esperaba un salto de linea",
   "varNotDefined": "Variable '{}' no definida",
   "equalsAfterNotExpected": "Se esperaba '=' despues de '!'",
+  "toIntError": "No se puede convertir a entero '{}'",
+  "invalidTypeError": "Tipo invalido '{}' para '{}'",
+  "toFloatError": "No se puede convertir a flotante '{}'",
+  "missingArgsError": "Faltan argumentos en la llamada a '{}'",
 }

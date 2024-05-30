@@ -2,7 +2,7 @@ from src.Values import *
 from src.SymbolTable import SymbolTable
 
 globalSymbolTable = SymbolTable()
-globalSymbolTable.set('nulo', Number.null)
+globalSymbolTable.set('nulo', Empty())
 globalSymbolTable.set('verdadero', Number.true)
 globalSymbolTable.set('falso', Number.false)
 globalSymbolTable.set('pi', Number.mathPI)
@@ -20,3 +20,6 @@ globalSymbolTable.set('sacar', BuiltInFunction.pop)
 globalSymbolTable.set('extender', BuiltInFunction.extend)
 globalSymbolTable.set('longitud', BuiltInFunction.len)
 globalSymbolTable.set('correr', BuiltInFunction.run)
+globalSymbolTable.set('aNumero', BuiltInFunction.toInt)
+globalSymbolTable.set('aFlotante', BuiltInFunction.toFloat)
+globalSymbolTable.set('aTexto', BuiltInFunction.toString)

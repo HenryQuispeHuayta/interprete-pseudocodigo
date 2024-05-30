@@ -57,14 +57,17 @@ class Value:
   def getComparisonGte(self, other):
     return None, self.illegalOperation(other)
 
+  def getComparisonMm(self, other):
+    return None, self.illegalOperation(other)
+
   def anded(self, other):
     return None, self.illegalOperation(other)
 
   def ored(self, other):
     return None, self.illegalOperation(other)
 
-  def notted(self):
-    return None, self.illegalOperation()
+  def notted(self, other):
+    return None, self.illegalOperation(other)
 
   def isTrue(self):
     return False
@@ -130,7 +133,7 @@ class Number(Value):
     else:
       return None, Value.illegalOperation(self, other)
 
-  def getComparisonEq(self, other):
+  def getComparisonEe(self, other):
     if isinstance(other, Number):
       return Number(int(self.value == other.value)).setContext(self.context), None
     else:
@@ -163,6 +166,17 @@ class Number(Value):
   def getComparisonGte(self, other):
     if isinstance(other, Number):
       return Number(int(self.value >= other.value)).setContext(self.context), None
+    else:
+      return None, Value.illegalOperation(self, other)
+
+  def getComparisonMm(self, other):
+    if isinstance(other, Number):
+      if self.value >= other.value - other.value * .2 and self.value <= other.value + other.value * .2:
+        return Number(1).setContext(self.context), None
+      elif other.value >= self.value - self.value * .2 and other.value <= self.value + self.value * .2:
+        return Number(1).setContext(self.context), None
+      else:
+        return Number(0).setContext(self.context), None
     else:
       return None, Value.illegalOperation(self, other)
 
@@ -232,6 +246,12 @@ class String(Value):
   def isTrue(self):
     return len(self.value) > 0
 
+  def getComparisonEe(self, other):
+    if isinstance(other, String):
+      return Number(int(self.value == other.value)).setContext(self.context), None
+    else:
+      return None, Value.illegalOperation(self, other)
+
   def copy(self):
     copy = String(self.value)
     copy.setPos(self.posStart, self.posEnd)
@@ -244,10 +264,6 @@ class String(Value):
   def __str__(self):
     return self.value
 
-String.null = String('')
-String.false = String('0')
-String.true = String('1')
-
 class List(Value):
   def __init__(self, elements):
     super().__init__()
@@ -255,7 +271,10 @@ class List(Value):
 
   def add(self, other): # TODO: Analyze this method
     newList = self.copy()
-    newList.elements.append(other)
+    if isinstance(other, List):
+      newList.elements.extend(other.elements)
+    else:
+      newList.elements.append(other)
     return newList, None
 
   def sub(self, other):
@@ -274,25 +293,24 @@ class List(Value):
       return None, Value.illegalOperation(self, other)
 
   def mul(self, other): # TODO: Analyze this method
-    if isinstance(other, List):
-      newList = self.copy()
-      newList.elements.extend(other.elements)
-      return newList, None
-    else:
-      return None, Value.illegalOperation(self, other)
+    newList = self.copy()
+    newList.elements.extend(self.elements * other.value)
 
-  def div(self, other):
+    return newList, None
+
+  def takeItem(self, other):
+    res = RunTimeResult()
     if isinstance(other, Number):
       try:
-        return self.elements[other.value], None
+        return res.success(self.elements[other.value])
       except:
-        return None, RunTimeError(
+        return res.failure(RunTimeError(
           other.posStart, other.posEnd,
           errorDetails['listIndexError'],
           self.context
-        )
+        ))
     else:
-      return None, Value.illegalOperation(self, other)
+      return res.failure(Value.illegalOperation(self, other))
 
   def copy(self):
     copy = List(self.elements)
@@ -318,18 +336,23 @@ class BaseFunction(Value):
 
   def checkArgs(self, argNames, args):
     res = RunTimeResult()
+    finalArgNames = []
+    
+    for argName in argNames:
+      if argName[-1] == '?':
+        finalArgNames.append(argName)
 
-    if len(args) > len(argNames):
+      if len(args) > len(argNames):
+        return res.failure(RunTimeError(
+          self.posStart, self.posEnd,
+          errorDetails['missingArgsError'].format(argName),
+          self.context
+        ))
+
+    if len(args) < len(finalArgNames):
       return res.failure(RunTimeError(
         self.posStart, self.posEnd,
-        errorDetails['tooManyArgsError'].format(len(args), len(argNames)),
-        self.context
-      ))
-
-    if len(args) < len(argNames):
-      return res.failure(RunTimeError(
-        self.posStart, self.posEnd,
-        errorDetails['tooFewArgsError'].format(len(args), len(argNames)),
+        errorDetails['missingArgsError'].format(finalArgNames[len(args)]),
         self.context
       ))
 
@@ -368,7 +391,7 @@ class Function(BaseFunction):
     value = res.register(interpreter.visit(self.bodyNode, newContext))
     if res.shouldReturn() and res.funcReturnValue == None: return res
 
-    returnValue = (value if self.shouldAutoReturn else None) or res.funcReturnValue or Number.null
+    returnValue = (value if self.shouldAutoReturn else None) or res.funcReturnValue or Empty()
     return res.success(returnValue)
 
   def copy(self):
@@ -399,7 +422,7 @@ class BuiltInFunction(BaseFunction):
     return res.success(returnValue)
 
   def noVisitMethod(self, node, context):
-    raise Exception(f'No se ha implementado el método execute_{self.name} para la clase BuiltInFunction')
+    raise Exception(f'No se ha implementado el método execute{self.name.capitalize()} para la clase BuiltInFunction')
 
   def copy(self):
     copy = BuiltInFunction(self.name)
@@ -472,7 +495,7 @@ class BuiltInFunction(BaseFunction):
       ))
 
     list_.elements.append(value)
-    return RunTimeResult().success(Number.null) # TODO: Analyze this return
+    return RunTimeResult().success(list_) # TODO: Analyze this return
   executeAppend.argNames = ['list', 'value']
 
   def executePop(self, execCtx):
@@ -527,7 +550,7 @@ class BuiltInFunction(BaseFunction):
     return RunTimeResult().success(listA)
   executeExtend.argNames = ['listA', 'listB']
 
-  def executeLen(self, execCtx):
+  def executeLen(self, execCtx): # TODO: Analyze this method
     list_ = execCtx.symbolTable.get('list')
 
     if not isinstance(list_, List):
@@ -575,12 +598,61 @@ class BuiltInFunction(BaseFunction):
     if error:
       return RunTimeResult().failure(RunTimeError(
         self.posStart, self.posEnd,
-        errorDetails['runTimeError']+':\n'+error.asString(),
+        errorDetails['runTimeError'].format(error.asString()),
         execCtx
       ))
 
-    return RunTimeResult().success(Number.null)
+    return RunTimeResult().success(Empty())
   executeRun.argNames = ['fn']
+
+  def executeToInt(self, execCtx):
+    value = execCtx.symbolTable.get('value')
+
+    if isinstance(value, String):
+      try:
+        return RunTimeResult().success(Number(int(value.value)))
+      except:
+        return RunTimeResult().failure(RunTimeError(
+          self.posStart, self.posEnd,
+          errorDetails['toIntError'].format(value.value),
+          execCtx
+        ))
+    elif isinstance(value, Number):
+      return RunTimeResult().success(Number(int(value.value)))
+    else:
+      return RunTimeResult().failure(RunTimeError(
+        self.posStart, self.posEnd,
+        errorDetails['invalidTypeError'].format('string', value),
+        execCtx
+      ))
+  executeToInt.argNames = ['value']
+
+  def executeToFloat(self, execCtx):
+    value = execCtx.symbolTable.get('value')
+
+    if isinstance(value, String):
+      try:
+        return RunTimeResult().success(Number(float(value.value)))
+      except:
+        return RunTimeResult().failure(RunTimeError(
+          self.posStart, self.posEnd,
+          errorDetails['toFloatError'].format(value.value),
+          execCtx
+        ))
+    elif isinstance(value, Number):
+      return RunTimeResult().success(Number(float(value.value)))
+    else:
+      return RunTimeResult().failure(RunTimeError(
+        self.posStart, self.posEnd,
+        errorDetails['invalidTypeError'].format('string', value),
+        execCtx
+      ))
+  executeToFloat.argNames = ['value']
+
+  def executeToString(self, execCtx):
+    value = execCtx.symbolTable.get('value')
+    return RunTimeResult().success(String(str(value)))
+  executeToString.argNames = ['value']
 
 BuiltInFunction.print = BuiltInFunction('print')
 BuiltInFunction.printRet = BuiltInFunction('printRet')
@@ -596,3 +668,6 @@ BuiltInFunction.pop = BuiltInFunction('pop')
 BuiltInFunction.extend = BuiltInFunction('extend')
 BuiltInFunction.len = BuiltInFunction('len')
 BuiltInFunction.run = BuiltInFunction('run')
+BuiltInFunction.toInt = BuiltInFunction('toInt')
+BuiltInFunction.toFloat = BuiltInFunction('toFloat')
+BuiltInFunction.toString = BuiltInFunction('toString')
