@@ -17,7 +17,7 @@ def signalHandler(sig, frame):
 
 signal.signal(signal.SIGINT, signalHandler)
 
-def cli():
+def main():
   for arg in sys.argv:
     if arg == '-':
       sys.argv.remove(arg)
@@ -62,4 +62,5 @@ def cli():
     input(f"\nPresione enter para salir...")
     sys.exit(0)
 
-cli()
+if __name__ == "__main__":
+  main()
