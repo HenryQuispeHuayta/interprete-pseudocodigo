@@ -195,7 +195,7 @@ class Parser:
     return self.power()
 
   def power(self):
-    return self.binOp(self.call, (TT_POW,), self.factor)
+    return self.binOp(self.call, (TT_POW,), self.factor) # TODO: check this
 
   def call(self):
     res = ParserResult()
@@ -278,6 +278,7 @@ class Parser:
       return res.success(VarAccessNode(tok))
 
     elif tok.type == TT_LPAREN:
+      self.registerAdvancement()
       self.advance()
       expr = res.register(self.expr())
       if res.error: return res
@@ -408,6 +409,10 @@ class Parser:
             self.currentTok.posStart, self.currentTok.posEnd,
             errorDetails['endExpected']
           ))
+      else:
+        expr = res.register(self.statement())
+        if res.error: return res
+        elseCase = (expr, False)
 
     return res.success(elseCase)
 
@@ -513,7 +518,7 @@ class Parser:
     startValue = res.register(self.expr())
     if res.error: return res
 
-    if not self.currentTok.matches(TT_KEYWORD, 'a'):
+    if not self.currentTok.matches(TT_KEYWORD, 'hasta'):
       return res.failure(InvalidSyntaxError(
         self.currentTok.posStart, self.currentTok.posEnd,
         errorDetails['toExpected']
@@ -525,7 +530,7 @@ class Parser:
     endValue = res.register(self.expr())
     if res.error: return res
 
-    if self.currentTok.matches(TT_KEYWORD, 'paso'):
+    if self.currentTok.matches(TT_KEYWORD, 'de'):
       res.registerAdvancement()
       self.advance()
 

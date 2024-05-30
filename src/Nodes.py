@@ -27,19 +27,13 @@ class VarAccessNode:
     self.varNameToken = varNameToken
     self.posStart = self.varNameToken.posStart
     self.posEnd = self.varNameToken.posEnd
-  
-    def __repr__(self): # TODO: analyze if this is correct
-      return f'{self.varNameToken}'
 
 class VarAssignNode:
   def __init__(self, varNameToken, valueNode):
     self.varNameToken = varNameToken
     self.valueNode = valueNode
-    self.posStart = self.varNameToken[0].posStart
+    self.posStart = self.varNameToken.posStart
     self.posEnd = self.valueNode.posEnd
-
-  def __repr__(self): # TODO: analyze if this is correct
-    return f'({self.varNameToken}, {self.valueNode})'
 
 class BinOpNode:
   def __init__(self, leftNode, opToken, rightNode):
@@ -69,9 +63,6 @@ class IfNode:
     self.posStart = self.cases[0][0].posStart
     self.posEnd = (self.elseCase or self.cases[-1])[0].posEnd
 
-  def __repr__(self): # TODO: analyze if this is correct
-    return f'({self.cases}, {self.elseCase})'
-
 class ForNode:
   def __init__(self, varNameToken, startValueNode, endValueNode, stepValueNode, bodyNode, shouldReturnNull):
     self.varNameToken = varNameToken
@@ -83,9 +74,6 @@ class ForNode:
     self.posStart = self.varNameToken.posStart
     self.posEnd = self.bodyNode.posEnd
 
-  def __repr__(self): # TODO: analyze if this is correct
-    return f'({self.varNameToken}, {self.startValueNode}, {self.endValueNode}, {self.stepValueNode}, {self.bodyNode})'
-
 class WhileNode:
   def __init__(self, conditionNode, bodyNode, shouldReturnNull):
     self.conditionNode = conditionNode
@@ -93,9 +81,6 @@ class WhileNode:
     self.shouldReturnNull = shouldReturnNull
     self.posStart = self.conditionNode.posStart
     self.posEnd = self.bodyNode.posEnd
-
-  def __repr__(self): # TODO: analyze if this is correct
-    return f'({self.conditionNode}, {self.bodyNode})'
 
 class FuncDefNode:
   def __init__(self, varNameToken, argNameTokens, bodyNode, shouldAutoReturn):
@@ -113,9 +98,6 @@ class FuncDefNode:
 
     self.posEnd = self.bodyNode.posEnd
 
-  def __repr__(self): # TODO: analyze if this is correct
-    return f'({self.varNameToken}, {self.argNameTokens}, {self.bodyNode})'
-
 class CallNode:
   def __init__(self, nodeToCall, argNodes):
     self.nodeToCall = nodeToCall
@@ -127,9 +109,6 @@ class CallNode:
     else:
       self.posEnd = self.nodeToCall.posEnd
 
-  def __repr__(self): # TODO: analyze if this is correct
-    return f'({self.nodeToCall}, {self.argNodes})'
-
 class CallListNode:
   def __init__(self, listToCall, listIndexNode):
     self.listToCall = listToCall
@@ -137,30 +116,18 @@ class CallListNode:
     self.posStart = self.listToCall.posStart
     self.posEnd = self.listToCall.posEnd
 
-  def __repr__(self): # TODO: analyze if this is correct
-    return f'({self.listToCall}, {self.listIndexNode})'
-
 class ReturnNode:
   def __init__(self, nodeToReturn, posStart, posEnd):
     self.nodeToReturn = nodeToReturn
     self.posStart = posStart
     self.posEnd = posEnd
 
-  def __repr__(self): # TODO: analyze if this is correct
-    return f'{self.nodeToReturn}'
-
 class ContinueNode:
   def __init__(self, posStart, posEnd):
     self.posStart = posStart
     self.posEnd = posEnd
 
-  def __repr__(self): # TODO: analyze if this is correct
-    return ''
-
 class BreakNode:
   def __init__(self, posStart, posEnd):
     self.posStart = posStart
     self.posEnd = posEnd
-
-  def __repr__(self): # TODO: analyze if this is correct
-    return ''
