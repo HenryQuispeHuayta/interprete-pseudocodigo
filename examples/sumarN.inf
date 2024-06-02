@@ -1,0 +1,11 @@
+# Calcular la suma de los primeros n números naturales
+
+funcion sumarNumeros(n)
+  var suma = 0
+  para i = 1 hasta n + 1 entonces
+    var suma = suma + i
+  fin
+  retornar suma
+fin
+
+imprimir(sumarNumeros(10))

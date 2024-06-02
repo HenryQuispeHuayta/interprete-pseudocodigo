@@ -1,0 +1,13 @@
+# Calcular el factorial de un número
+
+funcion factorial(n)
+  var aux = 1
+  var i = 1
+  mientras i <= n entonces
+    var aux = aux * i
+    var i = i + 1
+  fin
+  retornar aux
+fin
+
+imprimir(factorial(5))

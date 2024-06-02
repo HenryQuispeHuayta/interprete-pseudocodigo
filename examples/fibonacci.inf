@@ -1,0 +1,13 @@
+# Calcular el n-esimo número de la serie Fibonacci
+
+funcion fibonacci(n)
+  si n == 0 entonces
+    retornar 0
+  osi n == 1 entonces
+    retornar 1
+  sino 
+    retornar (fibonacci(n - 1) + fibonacci(n - 2))
+  fin
+fin
+
+imprimir(fibonacci(10))
