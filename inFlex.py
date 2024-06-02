@@ -24,7 +24,7 @@ def main():
   if len(sys.argv) == 1:
     while True:
       folder = os.path.basename(os.getcwd())
-      inputText = input(f"{folder} > ")
+      inputText = input(f"InFlex > ")
       inputText = inputText.replace("\\", "\\\\")
       if inputText.strip() == "":
         continue
